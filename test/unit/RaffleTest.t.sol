@@ -45,7 +45,8 @@ contract RaffleTest is Test {
             gasLane,
             subscriptionId,
             callbackGasLimit,
-            link
+            link,
+
         ) = helperConfig.activeNetworkConfig();
         vm.deal(PLAYER, STARTING_USER_BALANCE);
     }
@@ -166,13 +167,23 @@ contract RaffleTest is Test {
         assert(uint256(rState) == 1);
     }
 
+    modifier skipFork() {
+        if (block.chainid != 31337) {
+            return;
+        }
+        _;
+    }
+
     /** fulfillRandomWords */
     // this is a fuzz test. This is where we don't want to just test one case, but we want to test an assortment of cases that are generated randomly.
     // In foundry, using the randomRequestId variable, the test will be run multiple times and the randomRequestId number will be different every time
-    // to try and test mutliple cases with random numbers
+    // to try and test mutliple cases with random numbers.
+    // Another error popped up when working with this test. The mock version of VRF version the real version are different and require different parameters.
+    // This means, when we deploy to a testnet and are now using the real contract, the test fails. With the skipFork modifier, we will now only run this test
+    // on anvil
     function testFulfillRandomWordsCanOnlyBeCalledAfterPerformUpkeep(
         uint256 randomRequestId
-    ) public raffleEnteredAndTimePassed {
+    ) public raffleEnteredAndTimePassed skipFork {
         vm.expectRevert("nonexistent request");
         VRFCoordinatorV2Mock(vrfCoordinator).fulfillRandomWords(
             randomRequestId,
@@ -183,6 +194,7 @@ contract RaffleTest is Test {
     function testFulfillRandomWordsPicksAWinnerResetsAndSendsMoney()
         public
         raffleEnteredAndTimePassed
+        skipFork
     {
         // Arrange
         uint256 additionalEntrants = 5;

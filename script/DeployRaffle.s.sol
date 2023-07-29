@@ -16,7 +16,8 @@ contract DeployRaffle is Script {
             bytes32 gasLane,
             uint64 subscriptionId,
             uint32 callbackGasLimit,
-            address link
+            address link,
+            uint256 deployerKey
         ) = helperConfig.activeNetworkConfig();
 
         // if we do not have a subscription, we will create one and fund it
@@ -24,7 +25,8 @@ contract DeployRaffle is Script {
         if (subscriptionId == 0) {
             CreateSubscription createSubscription = new CreateSubscription();
             subscriptionId = createSubscription.createSubscription(
-                vrfCoordinator
+                vrfCoordinator,
+                deployerKey
             );
 
             // Fund it
@@ -32,7 +34,8 @@ contract DeployRaffle is Script {
             fundSubscription.fundSubscription(
                 vrfCoordinator,
                 subscriptionId,
-                link
+                link,
+                deployerKey
             );
         }
 
@@ -51,7 +54,8 @@ contract DeployRaffle is Script {
         addConsumer.addConsumer(
             address(raffle),
             vrfCoordinator,
-            subscriptionId
+            subscriptionId,
+            deployerKey
         );
         return (raffle, helperConfig);
     }
